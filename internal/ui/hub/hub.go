@@ -74,6 +74,7 @@ func New(a *core.App, env Env) *Hub {
 	h.settings = a.Settings()
 	kit.Appearance = h.settings.Appearance
 	h.hist.limit = 50
+	h.usage.rng = 1
 	return h
 }
 

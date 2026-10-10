@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"fmt"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -148,3 +149,31 @@ func TestDictionaryPage(t *testing.T) {
 	}
 	shot(t, tt, "dictionary-dark")
 }
+
+func TestStatisticsPage(t *testing.T) {
+	h, a := newHub(t, nil)
+	str := func(s string) *string { return &s }
+	for i, w := range []string{"今天下午三点开会。", "把这个发给小王", "Hello world again"} {
+		r := store.NewRow(fmt.Sprint("s", i), model.ModeDictation, "completed")
+		r.RawText, r.RefinedText, r.AppName, r.DurationSecs = str(w), str(w), str([]string{"Notes", "Slack", "Notes"}[i]), 4
+		r.AsrProvider, r.AsrMs, r.LlmModel, r.LlmMs, r.TotalMs = str("mimo"), u32(820), str("gemini-flash"), u32(640), u32(1700)
+		r.Words = uint32(len([]rune(w)))
+		if err := a.DB.UpsertHistory(r); err != nil {
+			t.Fatal(err)
+		}
+		in, out := uint64(1200), uint64(80)
+		a.DB.RecordUsage("gemini", "gemini-flash", &in, &out, nil, 0)
+		a.DB.RecordUsage("mimo", "mimo-v2.5", nil, nil, nil, 4)
+	}
+	h.page = "statistics"
+	tt := ui.NewTester(h.View, 1080, 1800)
+	tt.SetDark(true)
+	for _, s := range []string{"使用统计", "每日趋势", "速度", "结果", "常用应用", "Notes", "使用时段", "语音识别", "改写模型"} {
+		if !tt.HasText(s) {
+			t.Fatalf("missing %q: %q", s, tt.Texts())
+		}
+	}
+	shot(t, tt, "statistics-dark")
+}
+
+func u32(v uint32) *uint32 { return &v }

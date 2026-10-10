@@ -385,7 +385,9 @@ func (h *Hub) historyBody(c *ui.Context, it model.HistoryItem, final string) {
 			retry()
 		})
 	case it.Status == "empty":
-		status(func() { ui.Text(c, "音频无声。").Tooltip("Hoshiro 没有检测到口述中的任何单词，因此此转录为空。") })
+		status(func() {
+			ui.Text(c, "音频无声。").Tooltip("Hoshiro 没有检测到口述中的任何单词，因此此转录为空。")
+		})
 	case it.Mode == model.ModeAsk:
 		ui.Column(c).Gap(8).AlignItems(ui.Start).Children(func() {
 			if it.SelectedText != nil && *it.SelectedText != "" {
