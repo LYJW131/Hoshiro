@@ -78,14 +78,14 @@ func DefaultChunkConfig() ChunkConfig {
 
 // Processor turns device audio into 16 kHz PCM, levels, VAD and chunks.
 type Processor struct {
-	sink                         Sink
-	rs                           *Resampler
-	cfg                          ChunkConfig
-	frameBuf, cur, all           []int16
-	nextIndex                    int
-	curSpeech, totalSpeech, sil  int
-	recent                       []float32
-	level                        float32
+	sink                        Sink
+	rs                          *Resampler
+	cfg                         ChunkConfig
+	frameBuf, cur, all          []int16
+	nextIndex                   int
+	curSpeech, totalSpeech, sil int
+	recent                      []float32
+	level                       float32
 }
 
 func frameDB(f []int16) float32 {

@@ -19,7 +19,7 @@ type sim struct {
 }
 
 func newSim(t *testing.T, b model.ShortcutBindings) *sim { return &sim{t, NewMachine(b), Idle, 1000} }
-func defSim(t *testing.T) *sim                         { return newSim(t, model.DefaultShortcuts()) }
+func defSim(t *testing.T) *sim                           { return newSim(t, model.DefaultShortcuts()) }
 
 func (s *sim) apply(acts []Action) {
 	for _, a := range acts {
