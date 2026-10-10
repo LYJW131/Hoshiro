@@ -113,3 +113,38 @@ func TestHistoryPage(t *testing.T) {
 		t.Fatal("tab filter", tt.Texts())
 	}
 }
+
+func TestDictionaryPage(t *testing.T) {
+	h, a := newHub(t, nil)
+	a.AddWords([]string{"Tauri", "MiMo"}, "manual")
+	a.AddWords([]string{"Hoshiro"}, "auto")
+	h.page = "dictionary"
+	tt := ui.NewTester(h.View, 1080, 750)
+	tt.SetDark(true)
+	if !tt.HasText("Tauri") || !tt.HasText("Hoshiro") {
+		t.Fatal(tt.Texts())
+	}
+	if err := tt.Click("新词"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Type("星辰")
+	if err := tt.Click("添加词汇"); err != nil {
+		t.Fatal(err)
+	}
+	h.Changed("dictionary")
+	tt.Frame()
+	if !tt.HasText("星辰") {
+		t.Fatal("word not added", tt.Texts())
+	}
+	if err := tt.Click("自动添加"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if tt.HasText("Tauri") || !tt.HasText("Hoshiro") {
+		t.Fatal("filter")
+	}
+	if err := tt.Click("所有"); err != nil {
+		t.Fatal(err)
+	}
+	shot(t, tt, "dictionary-dark")
+}

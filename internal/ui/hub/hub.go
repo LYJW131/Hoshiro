@@ -251,9 +251,9 @@ func (h *Hub) sidebar(c *ui.Context) {
 				ui.Row(c).Gap(8).FontSize(12.5).Children(func() {
 					ui.Text(c, k).TextColor(p.Text2).SingleLine().Shrink(0).Margin(0, 6, 0, 0)
 					ui.Spacer(c)
-					ui.Row(c).Gap(6).FontWeight(600).Shrink(0).Children(func() {
+					ui.Row(c).Gap(6).FontWeight(600).Shrink(1).MinWidth(0).Children(func() {
 						kit.Dot(c, dot)
-						ui.Text(c, v).SingleLine()
+						ui.Text(c, v).SingleLine().Ellipsis("…").Shrink(1).MinWidth(0)
 					})
 				})
 			}
