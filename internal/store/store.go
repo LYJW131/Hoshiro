@@ -197,8 +197,8 @@ func Open(path, recordingsDir string) (*DB, error) {
 	return &DB{db: db, recordingsDir: recordingsDir}, nil
 }
 
-func (d *DB) Close() error             { return d.db.Close() }
-func (d *DB) RecordingsDir() string    { return d.recordingsDir }
+func (d *DB) Close() error          { return d.db.Close() }
+func (d *DB) RecordingsDir() string { return d.recordingsDir }
 
 func (d *DB) AudioFile(r HistoryRow) (string, bool) {
 	if r.AudioPath == nil {

@@ -39,7 +39,9 @@ func must(t *testing.T, err error) {
 	}
 }
 
-func q(m *model.Mode, s string) model.HistoryQuery { return model.HistoryQuery{Mode: m, Limit: 50, Search: s} }
+func q(m *model.Mode, s string) model.HistoryQuery {
+	return model.HistoryQuery{Mode: m, Limit: 50, Search: s}
+}
 
 func TestHistoryRoundtripAndFilters(t *testing.T) {
 	d, _ := mem(t)

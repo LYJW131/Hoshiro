@@ -435,3 +435,19 @@ type UsageStats struct {
 	AverageSessionSecs     float64       `json:"averageSessionSecs"`
 	AverageWordsPerSession float64       `json:"averageWordsPerSession"`
 }
+
+// AppContext describes the app the user is dictating into.
+type AppContext struct {
+	AppName     *string
+	BundleID    *string
+	WindowTitle *string
+	URL         *string // browser URL when cheaply available
+	// SelectedText is the selection in the focused element (via Accessibility).
+	SelectedText *string
+	// FocusedEditable is true if the focused element is editable, false if
+	// nothing editable is focused, nil when unknown.
+	FocusedEditable *bool
+	// SurroundingText is up to ~1500 chars around the caret.
+	SurroundingText *string
+	PID             *int32
+}
