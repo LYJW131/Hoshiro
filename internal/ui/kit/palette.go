@@ -6,19 +6,19 @@ import "github.com/egoist/mygo/ui"
 
 // Palette is tokens.css as Go values.
 type Palette struct {
-	Dark                                             bool
-	Page, Vignette, Sidebar, Card, Card2, Hover      ui.Color
-	Selected, Input, Overlay, Modal, Popover         ui.Color
-	Text, Text2, Text3                               ui.Color
-	Border, BorderStrong, Divider                    ui.Color
-	Accent, AccentHover, AccentSoft, AccentText      ui.Color
-	Danger, DangerSoft, Success, SuccessSoft         ui.Color
-	Warning, WarningSoft                             ui.Color
-	KeycapBg, KeycapBorder, KeycapText               ui.Color
-	Heat                                             [5]ui.Color
-	HeatHatch, DotGrid                               ui.Color
-	ModalShadow, PopoverShadow                       ui.Color
-	UsAsr, UsLlm                                     ui.Color
+	Dark                                        bool
+	Page, Vignette, Sidebar, Card, Card2, Hover ui.Color
+	Selected, Input, Overlay, Modal, Popover    ui.Color
+	Text, Text2, Text3                          ui.Color
+	Border, BorderStrong, Divider               ui.Color
+	Accent, AccentHover, AccentSoft, AccentText ui.Color
+	Danger, DangerSoft, Success, SuccessSoft    ui.Color
+	Warning, WarningSoft                        ui.Color
+	KeycapBg, KeycapBorder, KeycapText          ui.Color
+	Heat                                        [5]ui.Color
+	HeatHatch, DotGrid                          ui.Color
+	ModalShadow, PopoverShadow                  ui.Color
+	UsAsr, UsLlm                                ui.Color
 }
 
 const (

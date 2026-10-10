@@ -36,8 +36,8 @@ type feeder struct {
 }
 
 func (f *feeder) set(fn func([]float32)) { f.mu.Lock(); f.f = fn; f.mu.Unlock() }
-func (f *feeder) ready() bool           { f.mu.Lock(); defer f.mu.Unlock(); return f.f != nil }
-func (f *feeder) push(b []float32)      { f.mu.Lock(); fn := f.f; f.mu.Unlock(); fn(b) }
+func (f *feeder) ready() bool            { f.mu.Lock(); defer f.mu.Unlock(); return f.f != nil }
+func (f *feeder) push(b []float32)       { f.mu.Lock(); fn := f.f; f.mu.Unlock(); fn(b) }
 
 func newTestApp(t *testing.T) (*App, *feeder) {
 	t.Helper()

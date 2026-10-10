@@ -308,7 +308,7 @@ func (h *Hub) heatmap(c *ui.Context) {
 				for i := 1; i < len(cols); i++ {
 					for _, cell := range cols[i] {
 						if cell.date.Day() == 1 {
-							ui.Text(c.Key(i), months[cell.date.Month()-1]).Absolute().LeftPercent(float32(i)/heatCols*100).
+							ui.Text(c.Key(i), months[cell.date.Month()-1]).Absolute().LeftPercent(float32(i) / heatCols * 100).
 								FontSize(11.5).TextColor(p.Text2).SingleLine()
 						}
 					}

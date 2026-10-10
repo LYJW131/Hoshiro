@@ -38,25 +38,25 @@ type Hub struct {
 	a   *core.App
 	env Env
 
-	settings model.Settings
-	page     string // home | history | dictionary | statistics
-	settingsOpen bool
-	category     string
-	help         bool
+	settings        model.Settings
+	page            string // home | history | dictionary | statistics
+	settingsOpen    bool
+	category        string
+	help            bool
 	forceOnboarding bool
-	onboarding   onboardingState
+	onboarding      onboardingState
 
 	mu    sync.Mutex
 	dirty map[string]bool
 
-	stats    model.Stats
-	typeless *model.TypelessDetection
-	quitting bool
+	stats      model.Stats
+	typeless   *model.TypelessDetection
+	quitting   bool
 	heatOffset int
 	heatHover  int
 
-	hist histState
-	dict dictState
+	hist  histState
+	dict  dictState
 	usage usageState
 	set   settingsState
 
@@ -130,6 +130,8 @@ func (h *Hub) async(ctx *ui.Context, work func(), done func()) {
 		h.env.Update(done)
 	}()
 }
+
+func (h *Hub) ctx() context.Context { return context.Background() }
 
 func (h *Hub) reload() {
 	if h.take("settings") {
@@ -247,9 +249,9 @@ func (h *Hub) sidebar(c *ui.Context) {
 		pc.Children(func() {
 			line := func(k string, dot string, v string) {
 				ui.Row(c).Gap(8).FontSize(12.5).Children(func() {
-					ui.Text(c, k).TextColor(p.Text2).SingleLine().Shrink(0)
+					ui.Text(c, k).TextColor(p.Text2).SingleLine().Shrink(0).Margin(0, 6, 0, 0)
 					ui.Spacer(c)
-					ui.Row(c).Gap(6).FontWeight(600).Children(func() {
+					ui.Row(c).Gap(6).FontWeight(600).Shrink(0).Children(func() {
 						kit.Dot(c, dot)
 						ui.Text(c, v).SingleLine()
 					})

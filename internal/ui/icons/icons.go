@@ -57,4 +57,8 @@ var (
 	Usb           = load("usb")
 	Wand          = load("wand-sparkles")
 	X             = load("x")
+	Download      = load("download")
+	HardDrive     = load("hard-drive")
+	Lock          = load("lock")
+	More          = load("ellipsis")
 )

@@ -58,3 +58,58 @@ func TestHomeRenders(t *testing.T) {
 	tt.SetDark(false)
 	shot(t, tt, "home-light")
 }
+
+func seedHistory(t *testing.T, a *core.App) {
+	t.Helper()
+	str := func(s string) *string { return &s }
+	rows := []store.HistoryRow{}
+	r := store.NewRow("a1", model.ModeDictation, "completed")
+	r.RawText, r.RefinedText, r.AppName, r.DurationSecs = str("嗯 今天 下午 三点 开会"), str("今天下午三点开会。"), str("Notes"), 3.2
+	rows = append(rows, r)
+	r = store.NewRow("a2", model.ModeAsk, "completed")
+	r.RawText, r.RefinedText, r.SelectedText = str("翻译成英文"), str("Meeting at 3 pm today."), str("今天下午三点开会")
+	rows = append(rows, r)
+	r = store.NewRow("a3", model.ModeTranslation, "error")
+	r.ErrorMessage = str("MiMo 请求失败（401）：API Key 无效")
+	rows = append(rows, r)
+	r = store.NewRow("a4", model.ModeDictation, "empty")
+	rows = append(rows, r)
+	for _, r := range rows {
+		if err := a.DB.UpsertHistory(r); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestHistoryPage(t *testing.T) {
+	h, a := newHub(t, nil)
+	seedHistory(t, a)
+	h.page = "history"
+	tt := ui.NewTester(h.View, 1080, 1100)
+	tt.SetDark(true)
+	for _, s := range []string{"历史记录", "今天下午三点开会。", "翻译成英文", "查看答案", "音频无声。", "保存历史"} {
+		if !tt.HasText(s) {
+			t.Fatalf("missing %q in %q", s, tt.Texts())
+		}
+	}
+	if err := tt.Click("查看答案"); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText("Meeting at 3 pm today.") {
+		t.Fatal("answer not shown")
+	}
+	if err := tt.Click("今天下午三点开会。"); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText("原始转录") {
+		t.Fatal("raw not shown")
+	}
+	shot(t, tt, "history-dark")
+	if err := tt.Click("翻译"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if tt.HasText("今天下午三点开会。") || !tt.HasText("MiMo 请求失败（401）：API Key 无效") {
+		t.Fatal("tab filter", tt.Texts())
+	}
+}

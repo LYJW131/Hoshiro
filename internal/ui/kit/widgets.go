@@ -88,7 +88,7 @@ func Btn(c *ui.Context, label string, v Variant, s Size, icon *ui.SVG) ui.Elemen
 // IconBtn is .icon-btn (size 34, 30 "sm" or 22 "xs").
 func IconBtn(c *ui.Context, icon *ui.SVG, label string, size float32) ui.Element {
 	p := P(c)
-	b := ui.ButtonBase(c).Size(size, size).Justify(ui.Center).Radius(size*0.3).TextColor(p.Text2).FocusRing(false).Label(label)
+	b := ui.ButtonBase(c).Size(size, size).Justify(ui.Center).Radius(size * 0.3).TextColor(p.Text2).FocusRing(false).Label(label)
 	if label != "" {
 		b.Tooltip(label)
 	}
@@ -394,11 +394,11 @@ func ModalHeader(c *ui.Context, title, subtitle string, onClose func()) {
 
 // Confirm is feedback.tsx's confirm dialog. Returns true when confirmed.
 type Confirm struct {
-	Open         bool
-	Title, Desc  string
-	OK           string
-	Danger       bool
-	OnConfirm    func()
+	Open        bool
+	Title, Desc string
+	OK          string
+	Danger      bool
+	OnConfirm   func()
 }
 
 func (cf *Confirm) Ask(title, desc, ok string, danger bool, f func()) {
@@ -529,4 +529,51 @@ func circle(path *ui.Path, cx, cy, r, from, to float32) {
 			path.LineTo(x, y)
 		}
 	}
+}
+
+// MenuItem is one entry of a Dropdown.
+type MenuItem struct {
+	Label  string
+	Icon   *ui.SVG
+	Danger bool
+	Click  func()
+}
+
+// Dropdown is ui.tsx's DropdownMenu: a .popover .menu-list under anchor, toggled by clicking it.
+// It returns whether the menu is open.
+func Dropdown(c *ui.Context, anchor ui.Element, items []MenuItem) bool {
+	p := P(c)
+	open := ui.Local(anchor, "menu", func() bool { return false })
+	if anchor.Clicked() {
+		*open = !*open
+	}
+	if *open {
+		anchor.Background(p.Hover).TextColor(p.Text)
+	}
+	ui.PopoverBase(c, anchor, open, func(panel ui.Element) {
+		panel.Margin(6, 0, 0, 0).Padding(6).Radius(14).Background(p.Popover).Shadow(0, 12, 32, 0, p.PopoverShadow).
+			Border(1, p.Border).Gap(2).MinWidth(170).AttachTo(anchor, ui.AnchorBottomRight, ui.AnchorTopRight)
+		for i, it := range items {
+			b := ui.ButtonBase(c.Key(i)).Justify(ui.Start).MinHeight(34).Padding(6, 10).Radius(9).Gap(9).FontSize(14).FocusRing(false)
+			if b.Hovered() {
+				b.Background(p.Hover)
+			}
+			if it.Danger {
+				b.TextColor(p.Danger)
+			}
+			b.Children(func() {
+				if it.Icon != nil {
+					ui.Icon(c, it.Icon).FontSize(15)
+				}
+				ui.Text(c, it.Label).SingleLine()
+			})
+			if b.Clicked() {
+				*open = false
+				if it.Click != nil {
+					it.Click()
+				}
+			}
+		}
+	})
+	return *open
 }
