@@ -1,0 +1,17 @@
+{
+  "name": "Hoshiro",
+  "identifier": "cn.icybit.hoshiro",
+  "version": "0.1.1",
+  "copyright": "© 2026 IcyBlue17",
+  "main": "./cmd/hoshiro",
+  "out": "build",
+  "macos": {
+    "minimumSystemVersion": "13.0",
+    "entitlements": "macos.entitlements.plist",
+    "infoPlist": {
+      "NSMicrophoneUsageDescription": "Hoshiro 需要使用麦克风来进行语音输入。",
+      "NSAppleEventsUsageDescription": "Hoshiro 需要控制其他应用以插入文字。",
+      "LSUIElement": false
+    }
+  }
+}

@@ -3,7 +3,6 @@ package hub
 import (
 	"fmt"
 	"math"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -1274,11 +1273,11 @@ func (h *Hub) dataSection(c *ui.Context) {
 	kit.Group(c, "本地数据", func() {
 		kit.SRow(c, "数据文件夹", "", false, false, func() {
 			if kit.Btn(c, "打开数据文件夹", kit.Secondary, kit.Md, icons.FolderOpen).Clicked() {
-				target := filepath.Join(h.a.Paths.DataDir, "settings.json")
-				if err := h.a.OpenURL("file://" + h.a.Paths.DataDir); err != nil {
-					c.Toast("无法打开数据文件夹：" + err.Error())
+				if h.env.Reveal != nil {
+					h.env.Reveal(h.a.Paths.DataDir)
+				} else {
+					c.Toast("仅在桌面应用中可用")
 				}
-				_ = target
 			}
 		})
 	})

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/IcyBlue17/hoshiro/internal/ui/icons"
 	"github.com/IcyBlue17/hoshiro/internal/ui/kit"
@@ -116,6 +117,8 @@ func (h *Hub) updateGroup(c *ui.Context, version string) {
 					go func() {
 						if err := h.a.InstallUpdate(h.ctx()); err != nil {
 							h.env.Update(func() { c.Toast("更新失败：" + err.Error()) })
+						} else if h.env.Relaunch != nil {
+							h.env.Relaunch()
 						}
 					}()
 				}
@@ -135,7 +138,7 @@ func (h *Hub) updateGroup(c *ui.Context, version string) {
 				track := ui.Box(c).Height(6).Radius(3).Background(p.Hover).Clip()
 				track.Children(func() {
 					if progress < 0 {
-						x := track.Loop("indet", 1200*1e6, ui.EaseInOut)
+						x := track.Loop("indet", 1200*time.Millisecond, ui.EaseInOut)
 						ui.Box(c).WidthPercent(35).FillHeight().Radius(3).Background(p.Accent).Absolute().LeftPercent(x*100 - 35)
 					} else {
 						ui.Box(c).WidthPercent(float32(progress) * 100).FillHeight().Radius(3).Background(p.Accent)

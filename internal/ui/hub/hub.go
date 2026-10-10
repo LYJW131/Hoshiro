@@ -31,6 +31,8 @@ type Env struct {
 	OpenFile func(title string, exts []string) string
 	SaveFile func(title, name string) string
 	Relaunch func()
+	// Reveal shows the data folder in the file manager.
+	Reveal func(dir string)
 }
 
 // Hub is the main window's state.
