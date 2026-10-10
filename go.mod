@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/speech v1.37.0
 	github.com/coder/websocket v1.8.15
 	github.com/ebitengine/purego v0.11.1
+	github.com/egoist/mygo v0.3.7
 	github.com/google/uuid v1.6.0
 	google.golang.org/api v0.301.0
 	modernc.org/sqlite v1.60.1
@@ -22,6 +23,7 @@ require (
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-text/typesetting v0.3.5 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.22 // indirect
 	github.com/googleapis/gax-go/v2 v2.26.2 // indirect
@@ -35,6 +37,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.45.0 // indirect
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/image v0.46.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
