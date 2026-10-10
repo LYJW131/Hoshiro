@@ -30,9 +30,11 @@ func (h *Hub) homePage(c *ui.Context) {
 			// .hero-glow: radial-gradient(70% 90% at 28% 0%, vignette, transparent 78%)
 			pt.FillGradient(ui.Rect{X: r.X - 24, Y: r.Y, W: r.W + 48, H: 280}, ui.LinearGradient{From: p.Vignette, To: p.Vignette.Alpha(0), Angle: 180, End: 0.78}, 0)
 		}).Children(func() {
-			body := ui.Row(c).Gap(28).AlignItems(ui.Start).MaxWidth(1040)
+			var body ui.Element
 			if narrow {
 				body = ui.Column(c).MaxWidth(1040)
+			} else {
+				body = ui.Row(c).Gap(28).AlignItems(ui.Start).MaxWidth(1040)
 			}
 			body.Children(func() {
 				if narrow {
@@ -133,8 +135,10 @@ func (h *Hub) insights(c *ui.Context, narrow bool) {
 func (h *Hub) shortcutCard(c *ui.Context, row bool) {
 	p := kit.P(c)
 	sc := h.settings.Shortcuts
-	card := kit.Card(c).Padding(16, 16, 14).Gap(16)
-	if row {
+	var card ui.Element
+	if !row {
+		card = kit.Card(c).Padding(16, 16, 14).Gap(16)
+	} else {
 		card = ui.Row(c).Background(p.Card).Radius(kit.RadiusCard).Border(1, p.Border).Padding(16).Wrap().GapX(32).GapY(18).Margin(0, 0, 18)
 	}
 	card.Children(func() {
@@ -144,18 +148,22 @@ func (h *Hub) shortcutCard(c *ui.Context, row bool) {
 		}{{"口述", sc.Dictation}, {"翻译", sc.Translation}, {"问任何问题", sc.AskAnything}} {
 			ui.Column(c.Key(r.label)).Children(func() {
 				ui.Text(c, r.label).FontSize(13.5).TextColor(p.Text2).Margin(0, 0, 8)
-				keys := ui.Column(c).Gap(6).AlignItems(ui.Start)
+				var keys ui.Element
 				if row {
 					keys = ui.Row(c).Gap(6).Wrap()
+				} else {
+					keys = ui.Column(c).Gap(6).AlignItems(ui.Start)
 				}
 				keys.Children(func() {
 					if len(r.list) == 0 {
 						ui.Text(c, "未设置").TextColor(p.Text2)
 					}
 					for i, s := range r.list {
-						alt := ui.Column(c.Key(s)).Gap(5).AlignItems(ui.Start)
+						var alt ui.Element
 						if row {
 							alt = ui.Row(c.Key(s)).Gap(5)
+						} else {
+							alt = ui.Column(c.Key(s)).Gap(5).AlignItems(ui.Start)
 						}
 						alt.Children(func() {
 							if i > 0 {
@@ -172,9 +180,11 @@ func (h *Hub) shortcutCard(c *ui.Context, row bool) {
 
 func (h *Hub) versionBox(c *ui.Context, row bool) {
 	p := kit.P(c)
-	box := ui.Column(c).AlignItems(ui.End).Gap(4).Padding(0, 0, 8)
+	var box ui.Element
 	if row {
 		box = ui.Row(c).Justify(ui.End).Gap(10).Padding(6, 0, 0)
+	} else {
+		box = ui.Column(c).AlignItems(ui.End).Gap(4).Padding(0, 0, 8)
 	}
 	box.FontSize(13.5).TextColor(p.Text2).Children(func() {
 		v := h.a.Version

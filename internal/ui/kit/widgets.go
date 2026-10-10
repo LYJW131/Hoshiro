@@ -498,9 +498,11 @@ func Group(c *ui.Context, title string, fn func()) {
 // SRow is .srow: a title, description and control. stacked puts the control below.
 func SRow(c *ui.Context, title, desc string, stacked, disabled bool, control func()) {
 	p := P(c)
-	row := ui.Row(c).Gap(24).Padding(15, 18)
+	var row ui.Element
 	if stacked {
 		row = ui.Column(c).Gap(12).Padding(15, 18)
+	} else {
+		row = ui.Row(c).Gap(24).Padding(15, 18)
 	}
 	if disabled {
 		row.Opacity(0.5)

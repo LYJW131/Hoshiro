@@ -177,3 +177,69 @@ func TestStatisticsPage(t *testing.T) {
 }
 
 func u32(v uint32) *uint32 { return &v }
+
+func TestSettingsModal(t *testing.T) {
+	h, a := newHub(t, nil)
+	tt := ui.NewTester(h.View, 1080, 1500)
+	tt.SetDark(true)
+	if err := tt.Click("设置"); err != nil {
+		t.Fatal(err)
+	}
+	for _, cat := range categories {
+		if err := tt.Click(cat.label); err != nil {
+			t.Fatalf("%s: %v", cat.label, err)
+		}
+		tt.Frame()
+		shot(t, tt, "settings-"+cat.key)
+	}
+	// Providers: switch the rewrite provider and type a key.
+	tt.Click("模型服务")
+	tt.Frame()
+	if !tt.HasText("语音识别 · 小米 MiMo") || !tt.HasText("改写（AI 润色）") {
+		t.Fatal(tt.Texts())
+	}
+	r, _ := tt.Find("改写（AI 润色）")
+	tt.Scroll(r.X, r.Y, 0, 400)
+	tt.Frame()
+	ar, ok := tt.Find("Anthropic")
+	t.Log(r, ar, ok)
+	if err := tt.Click("Anthropic"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	shot(t, tt, "settings-providers-2")
+	if a.Settings().Llm.Provider != model.LlmAnthropic {
+		t.Fatal("provider not saved")
+	}
+	// General: appearance.
+	tt.Click("常规")
+	tt.Frame()
+	if err := tt.Click("明亮"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if a.Settings().Appearance != "light" {
+		t.Fatal("appearance not saved")
+	}
+	shot(t, tt, "settings-general-light")
+}
+
+func TestShortcutValidation(t *testing.T) {
+	others := []string{"Fn", "Fn+Space", "Fn+LeftShift", "Ctrl+Cmd+V"}
+	for combo, want := range map[string]string{
+		"A+B":                   "alphanumericOnly",
+		"Ctrl+Option+Cmd+Space": "tooManyKeys",
+		"RightCmd+Q":            "systemReserved",
+		"Space+Fn":              "alreadyInUse",
+		"Fn+RightShift":         "alreadyInUse",
+		"Fn+RightCmd":           "",
+		"RightOption":           "",
+	} {
+		if got := ValidateShortcut(combo, others); got != want {
+			t.Errorf("%s: got %q want %q", combo, got, want)
+		}
+	}
+	if NormalizedCombo("RightShift+Fn") != "Fn+Shift" {
+		t.Fatal(NormalizedCombo("RightShift+Fn"))
+	}
+}
