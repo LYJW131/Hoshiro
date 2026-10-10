@@ -4,6 +4,7 @@ go 1.27.2
 
 require (
 	cloud.google.com/go/speech v1.37.0
+	github.com/QuantumNous/new-api/relaykit v0.3.0
 	github.com/coder/websocket v1.8.15
 	github.com/ebitengine/purego v0.11.1
 	github.com/egoist/mygo v0.3.7
@@ -30,6 +31,11 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/samber/lo v1.53.0 // indirect
+	github.com/tidwall/gjson v1.19.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.67.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect

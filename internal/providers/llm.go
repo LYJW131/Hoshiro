@@ -1,11 +1,12 @@
 package providers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/QuantumNous/new-api/relaykit/dto"
+	"github.com/QuantumNous/new-api/relaykit/types"
 	"log"
 	"math"
 	"net/url"
@@ -384,27 +385,6 @@ func Complete(ctx context.Context, p model.LlmProvider, ep model.LlmEndpointConf
 	return s, nil
 }
 
-func postJSON(ctx context.Context, label, u string, hs []header, body map[string]any, timeout time.Duration) (any, []byte, *Failure) {
-	b, _ := json.Marshal(body)
-	hs = append(hs, header{"Content-Type", "application/json"})
-	resp, f := send(ctx, label, "POST", u, hs, bytes.NewReader(b), timeout)
-	if f != nil {
-		return nil, nil, f
-	}
-	var v any
-	if json.Unmarshal(resp, &v) != nil {
-		return nil, nil, &Failure{Message: label + " 返回了无法解析的响应"}
-	}
-	mdl, _ := body["model"].(string)
-	if mdl == "" {
-		if _, after, ok := strings.Cut(u, "/models/"); ok {
-			mdl, _, _ = strings.Cut(after, ":")
-		}
-	}
-	Usage(label, mdl, resp, 0)
-	return v, resp, nil
-}
-
 func mentions(f *Failure, hint string) bool {
 	return f.Status == 400 && strings.Contains(strings.ToLower(f.Message), hint)
 }
@@ -441,27 +421,28 @@ func geminiComplete(ctx context.Context, ep model.LlmEndpointConfig, system, use
 	tk := paramKey(model.LlmGemini, mdl, "thinkingConfig")
 	withThinking, withMime := !isRejected(tk), jsonMode
 	for range 3 {
-		gen := map[string]any{"temperature": 0.2}
+		v, err := toProvider(types.RelayFormatGemini, chatRequest{Model: mdl, System: system, User: user, Temperature: temp(0.2), JSON: withMime})
+		if err != nil {
+			return "", &Failure{Message: "Gemini 请求无法生成：" + err.Error()}
+		}
+		req := v.(*dto.GeminiChatRequest)
+		req.GenerationConfig.ThinkingConfig = nil
 		if withThinking {
-			gen["thinkingConfig"] = geminiThinking(mdl, e)
+			if strings.Contains(strings.ToLower(mdl), "gemini-3") {
+				req.GenerationConfig.ThinkingConfig = &dto.GeminiThinkingConfig{ThinkingLevel: e.geminiLevel()}
+			} else {
+				b := e.geminiBudget()
+				req.GenerationConfig.ThinkingConfig = &dto.GeminiThinkingConfig{ThinkingBudget: &b}
+			}
 		}
-		if withMime {
-			gen["responseMimeType"] = "application/json"
-		}
-		var safety []any
+		req.SafetySettings = nil
 		for _, c := range []string{"HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT"} {
-			safety = append(safety, map[string]any{"category": c, "threshold": "BLOCK_NONE"})
+			req.SafetySettings = append(req.SafetySettings, dto.GeminiChatSafetySettings{Category: c, Threshold: "BLOCK_NONE"})
 		}
-		body := map[string]any{
-			"systemInstruction": map[string]any{"parts": []any{map[string]any{"text": system}}},
-			"contents":          []any{map[string]any{"role": "user", "parts": []any{map[string]any{"text": user}}}},
-			"generationConfig":  gen,
-			"safetySettings":    safety,
-		}
-		v, _, f := postJSON(ctx, "Gemini", u, hs, body, timeout)
+		raw, f := postRelay(ctx, "Gemini", u, hs, req, mdl, timeout)
 		switch {
 		case f == nil:
-			return extractGemini(v)
+			return geminiText(raw)
 		case withThinking && mentions(f, "thinking"):
 			log.Printf("Gemini model %s rejects thinkingConfig; retrying without it", mdl)
 			reject(tk)
@@ -475,29 +456,24 @@ func geminiComplete(ctx context.Context, ep model.LlmEndpointConfig, system, use
 	return "", &Failure{Message: "Gemini 请求失败"}
 }
 
-func extractGemini(v any) (string, *Failure) {
-	var sb strings.Builder
-	if parts, ok := dig(v, "candidates", 0, "content", "parts").([]any); ok {
-		for _, p := range parts {
-			if th, _ := dig(p, "thought").(bool); th {
-				continue
-			}
-			if t, ok := dig(p, "text").(string); ok {
-				sb.WriteString(t)
-			}
+// geminiText reads the answer through RelayKit, or explains why there is none.
+func geminiText(raw []byte) (string, *Failure) {
+	text, err := fromProvider(types.RelayFormatGemini, raw)
+	if err == nil && !blank(text) {
+		return text, nil
+	}
+	var r dto.GeminiChatResponse
+	_ = json.Unmarshal(raw, &r)
+	if r.PromptFeedback != nil && r.PromptFeedback.BlockReason != nil {
+		return "", &Failure{Message: "Gemini 拒绝处理该内容（" + *r.PromptFeedback.BlockReason + "）"}
+	}
+	if len(r.Candidates) > 0 && r.Candidates[0].FinishReason != nil {
+		switch *r.Candidates[0].FinishReason {
+		case "SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST":
+			return "", &Failure{Message: "Gemini 因安全策略拦截了该内容"}
+		case "MAX_TOKENS":
+			return "", &Failure{Message: "Gemini 输出被截断"}
 		}
-	}
-	if strings.TrimSpace(sb.String()) != "" {
-		return sb.String(), nil
-	}
-	if r, ok := dig(v, "promptFeedback", "blockReason").(string); ok {
-		return "", &Failure{Message: "Gemini 拒绝处理该内容（" + r + "）"}
-	}
-	switch dig(v, "candidates", 0, "finishReason") {
-	case "SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST":
-		return "", &Failure{Message: "Gemini 因安全策略拦截了该内容"}
-	case "MAX_TOKENS":
-		return "", &Failure{Message: "Gemini 输出被截断"}
 	}
 	return "", &Failure{Message: "Gemini 没有返回内容"}
 }
@@ -541,25 +517,36 @@ func anthropicComplete(ctx context.Context, ep model.LlmEndpointConfig, system, 
 			m = anthropicMode{kind: 3}
 		}
 		cache := !isRejected(key("cache_control"))
-		body := map[string]any{"model": mdl, "max_tokens": 4096, "messages": []any{map[string]any{"role": "user", "content": user}}}
+		v, err := toProvider(types.RelayFormatClaude, chatRequest{Model: mdl, System: system, User: user})
+		if err != nil {
+			return "", &Failure{Message: "Anthropic 请求无法生成：" + err.Error()}
+		}
+		req := v.(*dto.ClaudeRequest)
+		maxTokens := uint(4096)
+		req.MaxTokens, req.Temperature, req.Thinking, req.OutputConfig = &maxTokens, nil, nil, nil
 		if cache {
-			body["system"] = []any{map[string]any{"type": "text", "text": system, "cache_control": map[string]any{"type": "ephemeral"}}}
+			req.System = []dto.ClaudeMediaMessage{{Type: "text", Text: &system, CacheControl: json.RawMessage(`{"type":"ephemeral"}`)}}
 		} else {
-			body["system"] = system
+			req.System = system
 		}
 		switch m.kind {
 		case 0:
-			body["thinking"] = map[string]any{"type": "disabled"}
+			req.Thinking = &dto.Thinking{Type: "disabled"}
 		case 1:
-			body["output_config"] = map[string]any{"effort": m.effort.level()}
+			req.OutputConfig, _ = json.Marshal(map[string]string{"effort": m.effort.level()})
 		case 2:
-			body["thinking"] = map[string]any{"type": "enabled", "budget_tokens": m.budget}
-			body["max_tokens"] = m.budget + 4096
+			b := m.budget
+			req.Thinking = &dto.Thinking{Type: "enabled", BudgetTokens: &b}
+			maxTokens = uint(b + 4096)
 		}
-		v, _, f := postJSON(ctx, "Anthropic", u, hs, body, timeout)
+		raw, f := postRelay(ctx, "Anthropic", u, hs, req, mdl, timeout)
 		switch {
 		case f == nil:
-			return extractAnthropic(v)
+			text, err := fromProvider(types.RelayFormatClaude, raw)
+			if err != nil || blank(text) {
+				return "", &Failure{Message: "Anthropic 没有返回内容"}
+			}
+			return text, nil
 		case cache && mentions(f, "cache_control"):
 			reject(key("cache_control"))
 		case m.kind == 0 && mentions(f, "thinking"):
@@ -573,23 +560,6 @@ func anthropicComplete(ctx context.Context, ep model.LlmEndpointConfig, system, 
 		}
 	}
 	return "", &Failure{Message: "Anthropic 请求失败"}
-}
-
-func extractAnthropic(v any) (string, *Failure) {
-	var sb strings.Builder
-	if blocks, ok := dig(v, "content").([]any); ok {
-		for _, b := range blocks {
-			if dig(b, "type") == "text" {
-				if t, ok := dig(b, "text").(string); ok {
-					sb.WriteString(t)
-				}
-			}
-		}
-	}
-	if strings.TrimSpace(sb.String()) == "" {
-		return "", &Failure{Message: "Anthropic 没有返回内容"}
-	}
-	return sb.String(), nil
 }
 
 // -- OpenAI-compatible --
@@ -608,18 +578,21 @@ func openaiComplete(ctx context.Context, ep model.LlmEndpointConfig, system, use
 	tk, rk := paramKey(model.LlmOpenAI, mdl, "temperature"), paramKey(model.LlmOpenAI, mdl, "reasoning_effort")
 	withTemp, withReasoning := !isRejected(tk), e != EffortOff && !isRejected(rk)
 	for range 3 {
-		body := map[string]any{"model": mdl, "messages": []any{
-			map[string]any{"role": "system", "content": system}, map[string]any{"role": "user", "content": user}}}
+		r := chatRequest{Model: mdl, System: system, User: user}
 		if withTemp {
-			body["temperature"] = 0.2
+			r.Temperature = temp(0.2)
 		}
 		if withReasoning {
-			body["reasoning_effort"] = e.level()
+			r.ReasoningEffort = e.level()
 		}
-		v, _, f := postJSON(ctx, "OpenAI 兼容服务", u, hs, body, timeout)
+		req, err := toProvider(types.RelayFormatOpenAI, r)
+		if err != nil {
+			return "", &Failure{Message: "OpenAI 兼容服务请求无法生成：" + err.Error()}
+		}
+		raw, f := postRelay(ctx, "OpenAI 兼容服务", u, hs, req, mdl, timeout)
 		switch {
 		case f == nil:
-			if t := extractContent(v); strings.TrimSpace(t) != "" {
+			if t, err := fromProvider(types.RelayFormatOpenAI, raw); err == nil && !blank(t) {
 				return t, nil
 			}
 			return "", &Failure{Message: "OpenAI 兼容服务没有返回内容"}

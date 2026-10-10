@@ -17,7 +17,7 @@ HOSHIRO_SHOTS=/tmp/shots go test ./internal/ui/...                # write UI scr
 | `cmd/hoshiro` | `lib.rs` setup, `tray.rs` (tray + app menu), `update.rs` wiring (MyGo updater), single instance, autostart |
 | `internal/core` | `controller.rs`, `pipeline.rs`, `commands.rs`, `state.rs`, `notify.rs`, `update.rs` |
 | `internal/audio` | `audio/` (capture, resampling to 16 kHz, WAV, levels, sounds) |
-| `internal/providers` | `providers/` (MiMo, Cloudflare, Azure, Google; ASR + LLM, streaming) |
+| `internal/providers` | `providers/`: ASR (MiMo, Cloudflare, Azure, Google; streaming) and the LLM layer, which builds OpenAI Chat requests and converts them to Claude / Gemini / OpenAI with [RelayKit](https://github.com/QuantumNous/new-api/tree/main/relaykit) (AGPL-3.0) |
 | `internal/store` | `db.rs` (SQLite via modernc.org/sqlite, pure Go) |
 | `internal/config`, `internal/secrets` | `config.rs`, Keychain (`secrets` uses Security.framework through purego) |
 | `internal/hotkey`, `internal/macos`, `internal/platform` | event tap / hotkeys, text insertion, clipboard, permissions, bar window setup (purego, no cgo) |
