@@ -243,3 +243,30 @@ func TestShortcutValidation(t *testing.T) {
 		t.Fatal(NormalizedCombo("RightShift+Fn"))
 	}
 }
+
+func TestOnboarding(t *testing.T) {
+	h, a := newHub(t, func(s *model.Settings) { s.OnboardingCompleted = false })
+	tt := ui.NewTester(h.View, 1080, 760)
+	tt.SetDark(true)
+	if !tt.HasText("欢迎使用 Hoshiro") {
+		t.Fatal(tt.Texts())
+	}
+	shot(t, tt, "onboarding-welcome")
+	for _, next := range []string{"开始设置", "下一步", "继续", "下一步", "下一步"} {
+		if err := tt.Click(next); err != nil {
+			t.Fatalf("%s: %v (%q)", next, err, tt.Texts())
+		}
+		tt.Frame()
+	}
+	if !tt.HasText("一切就绪") {
+		t.Fatal(tt.Texts())
+	}
+	shot(t, tt, "onboarding-done")
+	if err := tt.Click("开始使用"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if !a.Settings().OnboardingCompleted || !tt.HasText("说话，不要打字") {
+		t.Fatal("onboarding not completed")
+	}
+}
